@@ -1,5 +1,4 @@
 from fastapi.middleware.cors import CORSMiddleware
-
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -16,7 +15,8 @@ print("PINECONE_API_KEY:", os.getenv("PINECONE_API_KEY")[:5], "***")
 print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY")[:5], "***")
 
 # Initialize FastAPI app
-app = FastAPI()  # ✅ This line was missing!
+app = FastAPI()  
+
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
@@ -27,9 +27,9 @@ app.add_middleware(
 )
 
 # Load API keys from environment variables
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")  # Get from environment
-PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")  # Default to "us-east-1"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Get from environment
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")  
+PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")  
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  
 
 # Validate API keys
 if not PINECONE_API_KEY.strip() or not OPENAI_API_KEY.strip():
@@ -61,25 +61,23 @@ def chat(request: ChatRequest):
         query_vector = embedding_response.data[0].embedding
 
         # Search in Pinecone
-        search_results = index.query(vector=query_vector, top_k=5, include_metadata=True)
+        search_results = index.query(vector=query_vector, top_k=5, include_metadata=["text"])
 
         # Extract context from search results
-        if "matches" in search_results and search_results["matches"]:
-            context = "\n".join([match["metadata"]["text"] for match in search_results["matches"]])
-        else:
-            context = "No relevant information found."
+        matches = search_results.get("matches", [])
+        context = "\n".join([match.get("metadata", {}).get("text", "No data found") for match in matches]) if matches else "No relevant information found."
 
-        # Generate a response using OpenAI
+        # Generate a response using OpenAI GPT-4o
         response = openai.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are an AI assistant using Pinecone for knowledge retrieval."},
                 {"role": "user", "content": f"Context:\n{context}\n\nUser Query: {request.query}"}
             ]
         )
 
-        return {"response": response.choices[0].message.content}
-    
+        return {"response": response.choices[0]["message"]["content"]}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
