@@ -43,12 +43,12 @@ def read_root():
 @app.post("/chat")
 def chat(request: ChatRequest):
     try:
-        # Generate embedding for the query
-embedding_response = openai.embeddings.create(
-    model="text-embedding-ada-002",
-    input=request.query
-)
-query_vector = embedding_response.data[0].embedding
+        # Generate embedding for the query (Updated for OpenAI API v1)
+        embedding_response = openai.embeddings.create(
+            model="text-embedding-ada-002",
+            input=request.query
+        )
+        query_vector = embedding_response.data[0].embedding
 
         # Search in Pinecone
         search_results = index.query(query_vector, top_k=5, include_metadata=True)
@@ -60,7 +60,7 @@ query_vector = embedding_response.data[0].embedding
             context = "No relevant information found."
 
         # Generate a response using OpenAI
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are an AI assistant using Pinecone for knowledge retrieval."},
@@ -68,7 +68,7 @@ query_vector = embedding_response.data[0].embedding
             ]
         )
 
-        return {"response": response["choices"][0]["message"]["content"]}
+        return {"response": response.choices[0].message.content}
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
