@@ -5,6 +5,10 @@ import openai
 import pinecone
 import os  # Use environment variables for security
 
+# Debugging: Print API key status (DO NOT print actual keys for security)
+print("PINECONE_API_KEY is set:", bool(os.getenv("PINECONE_API_KEY")))
+print("OPENAI_API_KEY is set:", bool(os.getenv("OPENAI_API_KEY")))
+
 # Initialize FastAPI app
 app = FastAPI()
 
