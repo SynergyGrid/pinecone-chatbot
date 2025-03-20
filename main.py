@@ -8,10 +8,10 @@ import os  # Use environment variables for security
 # Initialize FastAPI app
 app = FastAPI()
 
-# Load API keys from environment variables
-PINECONE_API_KEY = os.getenv("pcsk_2Vxs26_UY18jaV64wX7tmKdf5PgY6KjPKtUQF6oef8HsRQ1Bcj2xfsYbqnpSLaKfnL8noQ")
+# Load API keys from environment variables (Corrected)
+PINECONE_API_KEY = os.getenv("pcsk_2Vxs26_UY18jaV64wX7tmKdf5PgY6KjPKtUQF6oef8HsRQ1Bcj2xfsYbqnpSLaKfnL8noQ")  # Retrieve from environment
 PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")  # Default to "us-east-1"
-OPENAI_API_KEY = os.getenv("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")
+OPENAI_API_KEY = os.getenv("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")  # Retrieve from environment
 
 # Validate API keys
 if not PINECONE_API_KEY or not OPENAI_API_KEY:
