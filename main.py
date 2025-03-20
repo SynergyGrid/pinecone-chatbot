@@ -22,9 +22,11 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Get from environment
 if not PINECONE_API_KEY.strip() or not OPENAI_API_KEY.strip():
     raise ValueError("Missing API keys! Ensure PINECONE_API_KEY and OPENAI_API_KEY are set.")
 
-# Initialize Pinecone
-pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENV)
-index = pinecone.Index("googlesheet")  # Make sure this matches your Pinecone index name
+from pinecone import Pinecone
+
+# Initialize Pinecone correctly
+pc = Pinecone(api_key=PINECONE_API_KEY)
+index = pc.Index("googlesheet")  # Make sure "googlesheet" is your actual index name
 
 # Set OpenAI API key
 openai.api_key = OPENAI_API_KEY
