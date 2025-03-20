@@ -11,8 +11,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 # Debugging: Print API key status (DO NOT print full keys for security)
-logging.info("PINECONE_API_KEY is set:", bool(os.getenv("PINECONE_API_KEY")))
-logging.info("OPENAI_API_KEY is set:", bool(os.getenv("OPENAI_API_KEY")))
+logging.info(f"PINECONE_API_KEY is set: {bool(os.getenv('PINECONE_API_KEY'))}")
+logging.info(f"OPENAI_API_KEY is set: {bool(os.getenv('OPENAI_API_KEY'))}")
 
 # Print first 5 characters of the keys (for debugging only)
 logging.info(f"PINECONE_API_KEY: {os.getenv('PINECONE_API_KEY')[:5]} ***")
