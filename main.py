@@ -51,7 +51,7 @@ def chat(request: ChatRequest):
         query_vector = embedding_response.data[0].embedding
 
         # Search in Pinecone
-        search_results = index.query(query_vector, top_k=5, include_metadata=True)
+        search_results = index.query(vector=query_vector, top_k=5, include_metadata=True)
 
         # Extract context from search results
         if "matches" in search_results and search_results["matches"]:
