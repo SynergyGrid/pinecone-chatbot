@@ -5,17 +5,21 @@ from pydantic import BaseModel
 import openai
 from pinecone import Pinecone
 import os  # Use environment variables for security
+import logging
+
+# Set up logging to capture detailed errors
+logging.basicConfig(level=logging.INFO)
 
 # Debugging: Print API key status (DO NOT print full keys for security)
-print("PINECONE_API_KEY is set:", bool(os.getenv("PINECONE_API_KEY")))
-print("OPENAI_API_KEY is set:", bool(os.getenv("OPENAI_API_KEY")))
+logging.info("PINECONE_API_KEY is set:", bool(os.getenv("PINECONE_API_KEY")))
+logging.info("OPENAI_API_KEY is set:", bool(os.getenv("OPENAI_API_KEY")))
 
 # Print first 5 characters of the keys (for debugging only)
-print("PINECONE_API_KEY:", os.getenv("PINECONE_API_KEY")[:5], "***")
-print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY")[:5], "***")
+logging.info(f"PINECONE_API_KEY: {os.getenv('PINECONE_API_KEY')[:5]} ***")
+logging.info(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY')[:5]} ***")
 
 # Initialize FastAPI app
-app = FastAPI()  
+app = FastAPI()
 
 # Enable CORS
 app.add_middleware(
@@ -27,9 +31,9 @@ app.add_middleware(
 )
 
 # Load API keys from environment variables
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")  
-PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")  
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")  # Default to "us-east-1"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Validate API keys
 if not PINECONE_API_KEY.strip() or not OPENAI_API_KEY.strip():
@@ -53,7 +57,10 @@ def read_root():
 @app.post("/chat")
 def chat(request: ChatRequest):
     try:
-        # Generate embedding for the query (Updated for OpenAI API v1)
+        # Add a log for incoming request
+        logging.info(f"Received request: {request.query}")
+        
+        # Generate embedding for the query
         embedding_response = openai.embeddings.create(
             model="text-embedding-ada-002",
             input=request.query
@@ -61,13 +68,15 @@ def chat(request: ChatRequest):
         query_vector = embedding_response.data[0].embedding
 
         # Search in Pinecone
-        search_results = index.query(vector=query_vector, top_k=5, include_metadata=["text"])
+        search_results = index.query(vector=query_vector, top_k=5, include_metadata=True)
 
         # Extract context from search results
-        matches = search_results.get("matches", [])
-        context = "\n".join([match.get("metadata", {}).get("text", "No data found") for match in matches]) if matches else "No relevant information found."
+        if "matches" in search_results and search_results["matches"]:
+            context = "\n".join([match.metadata["text"] for match in search_results["matches"] if "text" in match.metadata])
+        else:
+            context = "No relevant information found."
 
-        # Generate a response using OpenAI GPT-4o
+        # Generate a response using OpenAI
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -76,12 +85,15 @@ def chat(request: ChatRequest):
             ]
         )
 
-        return {"response": response.choices[0]["message"]["content"]}
+        return {"response": response.choices[0].message.content}
 
     except Exception as e:
+        # Log the error details
+        logging.error(f"Error in /chat endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Start the server
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000)) 
+    port = int(os.environ.get("PORT", 10000))  # Ensure it uses the correct port
+    logging.info(f"Starting server on port {port}")
     uvicorn.run(app, host="0.0.0.0", port=port)
