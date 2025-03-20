@@ -7,6 +7,10 @@ app = FastAPI()
 def read_root():
     return {"message": "Hello, this is my Pinecone chatbot!"}
 
+@app.get("/chat")
+def chat():
+    return {"message": "Chatbot is ready!"}
+
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 8000))  # Default to 8000 if PORT not set
