@@ -5,20 +5,21 @@ import openai
 import pinecone
 import os  # Use environment variables for security
 
-# Debugging: Print API key status (DO NOT print actual keys for security)
+# Debugging: Print API key status (DO NOT print full keys for security)
 print("PINECONE_API_KEY is set:", bool(os.getenv("PINECONE_API_KEY")))
 print("OPENAI_API_KEY is set:", bool(os.getenv("OPENAI_API_KEY")))
 
-# Initialize FastAPI app
-app = FastAPI()
+# Print first 5 characters of the keys (for debugging only)
+print("PINECONE_API_KEY:", os.getenv("PINECONE_API_KEY")[:5], "***")
+print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY")[:5], "***")
 
-# Load API keys from environment variables (Corrected)
-PINECONE_API_KEY = os.getenv("pcsk_2Vxs26_UY18jaV64wX7tmKdf5PgY6KjPKtUQF6oef8HsRQ1Bcj2xfsYbqnpSLaKfnL8noQ")  # Retrieve from environment
+# Load API keys from environment variables
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")  # Get from environment
 PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")  # Default to "us-east-1"
-OPENAI_API_KEY = os.getenv("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")  # Retrieve from environment
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Get from environment
 
 # Validate API keys
-if PINECONE_API_KEY is None or OPENAI_API_KEY is None:
+if not PINECONE_API_KEY.strip() or not OPENAI_API_KEY.strip():
     raise ValueError("Missing API keys! Ensure PINECONE_API_KEY and OPENAI_API_KEY are set.")
 
 # Initialize Pinecone
