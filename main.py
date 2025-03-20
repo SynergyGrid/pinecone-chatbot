@@ -44,9 +44,11 @@ def read_root():
 def chat(request: ChatRequest):
     try:
         # Generate embedding for the query
-        query_vector = openai.Embedding.create(
-            input=[request.query], model="text-embedding-ada-002"
-        )["data"][0]["embedding"]
+embedding_response = openai.embeddings.create(
+    model="text-embedding-ada-002",
+    input=request.query
+)
+query_vector = embedding_response.data[0].embedding
 
         # Search in Pinecone
         search_results = index.query(query_vector, top_k=5, include_metadata=True)
