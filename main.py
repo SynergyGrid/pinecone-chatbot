@@ -1,3 +1,5 @@
+from fastapi.middleware.cors import CORSMiddleware
+
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -15,6 +17,14 @@ print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY")[:5], "***")
 
 # Initialize FastAPI app
 app = FastAPI()  # ✅ This line was missing!
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (change to specific domains for security)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Load API keys from environment variables
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")  # Get from environment
