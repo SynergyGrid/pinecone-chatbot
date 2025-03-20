@@ -1,0 +1,5 @@
+pinecone-client
+pinecone-plugin-assistant
+fastapi
+uvicorn
+openai
