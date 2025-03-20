@@ -1,4 +1,4 @@
-pinecone-client
+pinecone
 pinecone-plugin-assistant
 fastapi
 uvicorn
