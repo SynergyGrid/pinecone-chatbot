@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import openai
-import pinecone
+from pinecone import Pinecone
 import os  # Use environment variables for security
 
 # Debugging: Print API key status (DO NOT print full keys for security)
@@ -13,6 +13,9 @@ print("OPENAI_API_KEY is set:", bool(os.getenv("OPENAI_API_KEY")))
 print("PINECONE_API_KEY:", os.getenv("PINECONE_API_KEY")[:5], "***")
 print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY")[:5], "***")
 
+# Initialize FastAPI app
+app = FastAPI()  # ✅ This line was missing!
+
 # Load API keys from environment variables
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")  # Get from environment
 PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")  # Default to "us-east-1"
@@ -22,11 +25,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Get from environment
 if not PINECONE_API_KEY.strip() or not OPENAI_API_KEY.strip():
     raise ValueError("Missing API keys! Ensure PINECONE_API_KEY and OPENAI_API_KEY are set.")
 
-from pinecone import Pinecone
-
-# Initialize Pinecone correctly
+# Initialize Pinecone
 pc = Pinecone(api_key=PINECONE_API_KEY)
-index = pc.Index("googlesheet")  # Make sure "googlesheet" is your actual index name
+index = pc.Index("googlesheet")  # Make sure this matches your Pinecone index name
 
 # Set OpenAI API key
 openai.api_key = OPENAI_API_KEY
