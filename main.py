@@ -69,6 +69,9 @@ def chat(request: ChatRequest):
 
         # Search in Pinecone
         search_results = index.query(vector=query_vector, top_k=5, include_metadata=True)
+print("Top Pinecone results:")
+for match in results["matches"]:
+    print(match["metadata"].get("text", "No text found"))
 
         # Extract context from search results
         if "matches" in search_results and search_results["matches"]:
