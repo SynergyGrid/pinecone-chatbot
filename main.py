@@ -63,7 +63,7 @@ def chat(request: ChatRequest):
         # Query Pinecone
         search_results = index.query(
             vector=query_vector,
-            top_k=5,
+            top_k=20,
             include_metadata=True
         )
 
