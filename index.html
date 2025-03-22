@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinecone Chatbot</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            width: 260px;
+            height: 100%;
+            background-color: #f7f7f8;
+            border-right: 1px solid #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 10px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-item:hover {
+            background-color: #ececf1;
+        }
+
+        /* Main chat container styles */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: calc(100% - 260px);
+        }
+
+        .chat-container {
+            flex: 1;
+            padding: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-group {
+            display: flex;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .user-message {
+            background-color: #ffffff;
+        }
+
+        .bot-message {
+            background-color: #f7f7f8;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background-color: #5437db;
+            color: white;
+        }
+
+        .bot-avatar {
+            background-color: #19c37d;
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+            line-height: 1.5;
+            overflow-wrap: break-word;
+            padding-top: 4px;
+        }
+
+        .input-container {
+            padding: 10px 20px 30px;
+            position: relative;
+        }
+
+        .input-box {
+            display: flex;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 12px 16px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        #user-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            resize: none;
+            max-height: 200px;
+            min-height: 24px;
+            overflow-y: auto;
+            background: transparent;
+        }
+
+        .input-buttons {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .send-btn {
+            background-color: #5437db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .send-btn:hover {
+            background-color: #4826d9;
+        }
+
+        .send-btn:disabled {
+            background-color: #e5e5e5;
+            cursor: not-allowed;
+        }
+
+        .upload-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+        }
+
+        .upload-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #6e6e80;
+        }
+
+        .upload-btn:hover svg {
+            fill: #5437db;
+        }
+
+        #file-upload {
+            display: none;
+        }
+
+        /* Footer info */
+        .info-text {
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #6e6e80;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .main-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <button class="new-chat-btn" onclick="startNewChat()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 4V20M4 12H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            New chat
+        </button>
+        <div class="chat-history" id="chat-history">
+            <!-- History items will be added here by JavaScript -->
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="chat-container" id="chat-container">
+            <!-- Welcome message -->
+            <div class="message-group bot-message">
+                <div class="avatar bot-avatar">P</div>
+                <div class="message-content">
+                    Hello! I'm your Pinecone chatbot assistant. How can I help you today?
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-box">
+                <textarea id="user-input" placeholder="Message Pinecone Chatbot..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+                <div class="input-buttons">
+                    <label class="upload-btn" for="file-upload" title="Upload file">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15l-5-5h3V8h4v4h3l-5 5z"/>
+                        </svg>
+                    </label>
+                    <input type="file" id="file-upload" onchange="uploadFile()">
+                    <button class="send-btn" id="send-button" onclick="sendMessage()">
+                        Send
+                    </button>
+                </div>
+            </div>
+            <div class="info-text">
+                Pinecone Chatbot may produce inaccurate information about people, places, or facts.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const apiBaseUrl = "https://pinecone-chatbot.onrender.com"; // Replace with your Render URL
+        let chatHistory = [];
+        
+        // Auto-resize textarea
+        const textarea = document.getElementById("user-input");
+        textarea.addEventListener("input", function() {
+            this.style.height = "auto";
+            this.style.height = (this.scrollHeight) + "px";
+        });
+
+        function handleKeyDown(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+        
+        function sendMessage() {
+            const userInput = document.getElementById("user-input").value.trim();
+            if (!userInput) return;
+            
+            // Add user message to the chat
+            addMessage(userInput, "user");
+            
+            // Clear input and reset height
+            document.getElementById("user-input").value = "";
+            document.getElementById("user-input").style.height = "auto";
+            
+            // Disable send button and show "thinking" state
+            const sendButton = document.getElementById("send-button");
+            sendButton.disabled = true;
+            sendButton.innerHTML = "Thinking...";
+            
+            // Send the message to the API
+            fetch(`${apiBaseUrl}/chat`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("API Response:", data); // Debugging line
+                const responseText = data.response || "I'm sorry, I couldn't process that request.";
+                addMessage(responseText, "bot");
+                
+                // Save to chat history
+                saveChat(userInput, responseText);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                addMessage("Sorry, there was an error processing your request.", "bot");
+            })
+            .finally(() => {
+                // Re-enable send button
+                sendButton.disabled = false;
+                sendButton.innerHTML = "Send";
+            });
+        }
+        
+        function uploadFile() {
+            const fileInput = document.getElementById("file-upload");
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            // Show uploading message
+            addMessage(`Uploading file: ${file.name}...`, "user");
+            
+            const formData = new FormData();
+            formData.append("file", file);
+            
+            fetch(`${apiBaseUrl}/upload`, {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage(data.message || "File uploaded successfully!", "bot");
+                
+                // Save to chat history
+                saveChat(`Uploaded file: ${file.name}`, data.message || "File uploaded successfully!");
+                
+                // Reset file input
+                fileInput.value = "";
+            })
+            .catch(error => {
+                console.error("Upload error:", error);
+                addMessage("Sorry, there was an error uploading your file.", "bot");
+                fileInput.value = "";
+            });
+        }
+        
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById("chat-container");
+            
+            // Create message group
+            const messageGroup = document.createElement("div");
+            messageGroup.classList.add("message-group");
+            messageGroup.classList.add(sender === "user" ? "user-message" : "bot-message");
+            
+            // Create avatar
+            const avatar = document.createElement("div");
+            avatar.classList.add("avatar");
+            avatar.classList.add(sender === "user" ? "user-avatar" : "bot-avatar");
+            avatar.textContent = sender === "user" ? "Y" : "P";
+            
+            // Create message content
+            const messageContent = document.createElement("div");
+            messageContent.classList.add("message-content");
+            
+            // Format text with paragraphs
+            const paragraphs = text.split("\n");
+            paragraphs.forEach((paragraph, index) => {
+                if (paragraph.trim() !== "") {
+                    const p = document.createElement("p");
+                    p.textContent = paragraph;
+                    messageContent.appendChild(p);
+                    
+                    // Add spacing between paragraphs
+                    if (index < paragraphs.length - 1) {
+                        messageContent.appendChild(document.createElement("br"));
+                    }
+                }
+            });
+            
+            // Assemble message
+            messageGroup.appendChild(avatar);
+            messageGroup.appendChild(messageContent);
+            
+            // Add to chat container
+            chatContainer.appendChild(messageGroup);
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function saveChat(userMessage, botMessage) {
+            // Create chat entry with timestamp
+            const chatEntry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                title: userMessage.substring(0, by30) + (userMessage.length > 30 ? "..." : ""),
+                messages: [
+                    { sender: "user", text: userMessage },
+                    { sender: "bot", text: botMessage }
+                ]
+            };
+            
+            // Add to history array
+            chatHistory.unshift(chatEntry);
+            
+            // Limit history to 10 items
+            if (chatHistory.length > 10) {
+                chatHistory = chatHistory.slice(0, 10);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem("pineconeChat", JSON.stringify(chatHistory));
+            
+            // Update sidebar
+            updateChatHistory();
+        }
+        
+        function updateChatHistory() {
+            const historyContainer = document.getElementById("chat-history");
+            historyContainer.innerHTML = "";
+            
+            chatHistory.forEach(chat => {
+                const chatItem = document.createElement("div");
+                chatItem.classList.add("chat-item");
+                chatItem.textContent = chat.title;
+                chatItem.setAttribute("data-id", chat.id);
+                chatItem.onclick = () => loadChat(chat.id);
+                historyContainer.appendChild(chatItem);
+            });
+        }
+        
+        function loadChat(chatId) {
+            const chat = chatHistory.find(c => c.id === chatId);
+            if (!chat) return;
+            
+            // Clear current chat
+            document.getElementById("chat-container").innerHTML = "";
+            
+            // Add welcome message
+            addMessage("Hello! I'm your Pinecone chatbot assistant. How can I help you today?", "bot");
+            
+            // Add messages from history
+            chat.messages.forEach(msg => {
+                addMessage(msg.text, msg.sender);
+            });
+        }
+        
+        function startNewChat() {
+            // Clear chat container
+            document.getElementById("chat-container").innerHTML = "";
+            
+            // Add welcome message
+            addMessage("Hello! I'm your Pinecone chatbot assistant. How can I help you today?", "bot");
+        }
+        
+        // Load chat history on page load
+        window.onload = function() {
+            const savedHistory = localStorage.getItem("pineconeChat");
+            if (savedHistory) {
+                chatHistory = JSON.parse(savedHistory);
+                updateChatHistory();
+            }
+            
+            // Focus on input
+            document.getElementById("user-input").focus();
+        };
+    </script>
+</body>
+</html>
