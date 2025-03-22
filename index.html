@@ -407,7 +407,7 @@
             const chatEntry = {
                 id: Date.now(),
                 timestamp: new Date().toISOString(),
-                title: userMessage.substring(0, by30) + (userMessage.length > 30 ? "..." : ""),
+                title: userMessage.substring(0, 30) + (userMessage.length > 30 ? "..." : ""),
                 messages: [
                     { sender: "user", text: userMessage },
                     { sender: "bot", text: botMessage }
