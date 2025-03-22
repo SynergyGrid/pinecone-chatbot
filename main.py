@@ -44,9 +44,11 @@ openai.api_key = OPENAI_API_KEY
 class ChatRequest(BaseModel):
     query: str
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello, this is my Pinecone chatbot!"}
+from fastapi.responses import FileResponse
+
+@app.get("/", response_class=FileResponse)
+def serve_ui():
+    return FileResponse("index.html")
 
 @app.post("/chat")
 def chat(request: ChatRequest):
