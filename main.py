@@ -6,6 +6,7 @@ import openai
 from pinecone import Pinecone
 import os
 import logging
+from fastapi.responses import FileResponse
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -43,8 +44,6 @@ openai.api_key = OPENAI_API_KEY
 
 class ChatRequest(BaseModel):
     query: str
-
-from fastapi.responses import FileResponse
 
 @app.get("/", response_class=FileResponse)
 def serve_ui():
@@ -94,6 +93,23 @@ def chat(request: ChatRequest):
     except Exception as e:
         logging.error(f"Error in /chat endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/debug-index")
+def debug_index():
+    try:
+        # Sample 20 records from Pinecone (adjust top_k as needed)
+        results = index.query(vector=[0.0]*1536, top_k=20, include_metadata=True, namespace="")
+
+        output = []
+        for i, match in enumerate(results.get("matches", [])):
+            text = match["metadata"].get("text", "❌ MISSING TEXT")
+            source = match["metadata"].get("source", "no source")
+            output.append(f"{i+1}. Source: {source}\n{text}\n{'-'*40}")
+
+        return {"results": output}
+
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
