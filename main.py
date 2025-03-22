@@ -54,14 +54,14 @@ def chat(request: ChatRequest):
     try:
         logging.info(f"Received request: {request.query}")
 
-        # Create embedding
+        # Create embedding using text-embedding-3-small
         embedding_response = openai.embeddings.create(
-            model="text-embedding-ada-002",
+            model="text-embedding-3-small",
             input=request.query
         )
         query_vector = embedding_response.data[0].embedding
 
-        # Query Pinecone with score filter and top_k=50
+        # Query Pinecone with top_k=50
         search_results = index.query(
             vector=query_vector,
             top_k=50,
@@ -74,10 +74,10 @@ def chat(request: ChatRequest):
             if match.get("score", 0) >= 0.75 and "text" in match.metadata
         ]
 
-        # Build context
+        # Build context from filtered matches
         context = "\n\n".join(match.metadata["text"] for match in matches) or "No relevant information found."
 
-        # GPT response with system formatting prompt
+        # GPT response
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -85,8 +85,7 @@ def chat(request: ChatRequest):
                     "role": "system",
                     "content": (
                         "You are an AI assistant using Pinecone for knowledge retrieval. "
-                        "Always provide structured, clear, and well-formatted responses. "
-                        "Use bullet points, section headers, or tables when helpful."
+                        "Always provide clear, well-structured responses. Use section headers, bullet points, and tables whenever helpful."
                     )
                 },
                 {
