@@ -61,30 +61,38 @@ def chat(request: ChatRequest):
         )
         query_vector = embedding_response.data[0].embedding
 
-        # Query Pinecone
+        # Query Pinecone with score filter and top_k=50
         search_results = index.query(
             vector=query_vector,
-            top_k=20,
+            top_k=50,
             include_metadata=True
         )
 
-        # Log results
-        print("Top Pinecone results:")
-        for match in search_results["matches"]:
-            print(match["metadata"].get("text", "No text found"))
+        # Filter results by score
+        matches = [
+            match for match in search_results.get("matches", [])
+            if match.get("score", 0) >= 0.75 and "text" in match.metadata
+        ]
 
-        # Extract context
-        if "matches" in search_results and search_results["matches"]:
-            context = "\n".join([match.metadata["text"] for match in search_results["matches"] if "text" in match.metadata])
-        else:
-            context = "No relevant information found."
+        # Build context
+        context = "\n\n".join(match.metadata["text"] for match in matches) or "No relevant information found."
 
-        # GPT response
+        # GPT response with system formatting prompt
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are an AI assistant using Pinecone for knowledge retrieval."},
-                {"role": "user", "content": f"Context:\n{context}\n\nUser Query: {request.query}"}
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an AI assistant using Pinecone for knowledge retrieval. "
+                        "Always provide structured, clear, and well-formatted responses. "
+                        "Use bullet points, section headers, or tables when helpful."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Context:\n{context}\n\nUser Query: {request.query}"
+                }
             ]
         )
 
@@ -97,17 +105,13 @@ def chat(request: ChatRequest):
 @app.get("/debug-index")
 def debug_index():
     try:
-        # Sample 20 records from Pinecone (adjust top_k as needed)
         results = index.query(vector=[0.0]*1536, top_k=20, include_metadata=True, namespace="")
-
         output = []
         for i, match in enumerate(results.get("matches", [])):
             text = match["metadata"].get("text", "❌ MISSING TEXT")
             source = match["metadata"].get("source", "no source")
             output.append(f"{i+1}. Source: {source}\n{text}\n{'-'*40}")
-
         return {"results": output}
-
     except Exception as e:
         return {"error": str(e)}
 
