@@ -316,9 +316,9 @@
                 saveChat(userInput, responseText);
             })
             .catch(error => {
-                console.error("Error:", error);
-                addMessage("Sorry, there was an error processing your request.", "bot");
-            })
+    console.error("Error:", error);
+    addMessage(`⚠️ Error: ${error.message}`, "bot");
+})
             .finally(() => {
                 // Re-enable send button
                 sendButton.disabled = false;
